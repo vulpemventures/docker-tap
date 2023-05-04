@@ -6,11 +6,12 @@ FROM golang:1.20.3-alpine as builder
 ARG checkout="main"
 ARG git_url="https://github.com/lightninglabs/taro"
 
+ENV CGO_ENABLED=0
+
 # Install dependencies and build the binaries.
 RUN apk add --no-cache --update alpine-sdk \
     git \
     make \
-    gcc \
 &&  git clone $git_url /go/src/github.com/lightninglabs/taro \
 &&  cd /go/src/github.com/lightninglabs/taro \
 &&  git checkout $checkout \
@@ -19,13 +20,14 @@ RUN apk add --no-cache --update alpine-sdk \
 # Start a new, final image.
 FROM alpine as final
 
-# Add utilities for quality of life and SSL-related reasons. We also require
-# curl and gpg for the signature verification script.
+# Define a root volume for data persistence.
+VOLUME /root/.tarod
+
+# Add utilities for quality of life and SSL-related reasons
 RUN apk --no-cache add \
     bash \
     jq \
     ca-certificates \
-    gnupg \
     curl
 
 # Copy the binaries from the builder image.

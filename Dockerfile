@@ -3,8 +3,8 @@ FROM golang:1.20.3-alpine as builder
 # Pass a tag, branch or a commit using build-arg.  This allows a docker
 # image to be built from a specified Git state.  The default image
 # will use the Git tip of master by default.
-ARG checkout="main"
-ARG git_url="https://github.com/lightninglabs/taro"
+ARG checkout="v0.2.0"
+ARG git_url="https://github.com/lightninglabs/taproot-assets"
 
 ENV CGO_ENABLED=0
 
@@ -12,8 +12,8 @@ ENV CGO_ENABLED=0
 RUN apk add --no-cache --update alpine-sdk \
     git \
     make \
-&&  git clone $git_url /go/src/github.com/lightninglabs/taro \
-&&  cd /go/src/github.com/lightninglabs/taro \
+&&  git clone $git_url /go/src/github.com/lightninglabs/taproot-assets \
+&&  cd /go/src/github.com/lightninglabs/taproot-assets \
 &&  git checkout $checkout \
 &&  make install
 
@@ -21,7 +21,7 @@ RUN apk add --no-cache --update alpine-sdk \
 FROM alpine as final
 
 # Define a root volume for data persistence.
-VOLUME /root/.tarod
+VOLUME /root/.tapd
 
 # Add utilities for quality of life and SSL-related reasons
 RUN apk --no-cache add \
@@ -31,12 +31,12 @@ RUN apk --no-cache add \
     curl
 
 # Copy the binaries from the builder image.
-COPY --from=builder /go/bin/tarod /bin/
-COPY --from=builder /go/bin/tarocli /bin/
+COPY --from=builder /go/bin/tapd /bin/
+COPY --from=builder /go/bin/tapcli /bin/
 
-# Expose taro ports
+# Expose tap ports
 EXPOSE 10029
 EXPOSE 8089
 
-# Specify the start command and entrypoint as the taro daemon.
-ENTRYPOINT ["tarod"]
+# Specify the start command and entrypoint as the tap daemon.
+ENTRYPOINT ["tapd"]
